@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(open \"/Users/pengxiao/Documents/ADSP/2025 Autumn/Bayesian/Regime Change/design_preview.html\")",
+      "Bash(npm create:*)"
+    ]
+  }
+}
