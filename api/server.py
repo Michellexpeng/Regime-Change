@@ -185,6 +185,8 @@ def bocpd():
 
 
 if __name__ == "__main__":
-    print("BOCPD API server running at http://localhost:8765")
+    import os
+    port = int(os.environ.get("PORT", 8765))
+    print(f"BOCPD API server running at http://0.0.0.0:{port}")
     print("  GET /bocpd?ticker=SPY&start=2016-01-01&end=2026-04-14")
-    app.run(port=8765, debug=False)
+    app.run(host="0.0.0.0", port=port, debug=False)
