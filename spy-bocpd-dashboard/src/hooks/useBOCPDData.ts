@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 import type { BOCPDData } from '../types/bocpd'
 import staticData from '../data/bocpd_data.json'
 
-const API_BASE = 'https://regime-change.onrender.com'
+const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8765'
 
 export interface FetchParams {
   ticker: string

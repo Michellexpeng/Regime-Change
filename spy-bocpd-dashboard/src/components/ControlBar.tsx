@@ -1,4 +1,5 @@
 import { useState, useCallback, FormEvent } from 'react'
+import { InfoTooltip } from './InfoTooltip'
 
 export interface QueryParams {
   ticker: string
@@ -127,11 +128,12 @@ export default function ControlBar({ defaults, loading, onSubmit }: Props) {
         <div className="w-px h-4 bg-border" />
 
         {/* Lambda — number input + quick chips */}
-        <div
-          className="flex items-center gap-1.5"
-          title="λ: expected trading days between changepoints. Higher = fewer changepoints."
-        >
+        <div className="flex items-center gap-1.5">
           <label className="text-[10px] font-sans uppercase tracking-widest text-t3 whitespace-nowrap">λ</label>
+          <InfoTooltip
+            text="Expected number of trading days between changepoints. Sets the geometric prior hazard rate H = 1/λ. Larger λ → rarer changepoints → smoother segmentation. Default: 250 (~1 year)."
+            width={260}
+          />
           {/* Quick-select chips */}
           <div className="flex gap-0.5">
             {QUICK_LAMBDAS.map(l => (
@@ -163,11 +165,12 @@ export default function ControlBar({ defaults, loading, onSubmit }: Props) {
         </div>
 
         {/* Threshold — slider, bounded 0.50–0.95 */}
-        <div
-          className="flex items-center gap-2"
-          title="Detection threshold for short_run_prob. Higher = fewer but more confident changepoints."
-        >
+        <div className="flex items-center gap-2">
           <label className="text-[10px] font-sans uppercase tracking-widest text-t3 whitespace-nowrap">Thr</label>
+          <InfoTooltip
+            text="Detection threshold for the regime-change signal. A changepoint is declared when the probability that a new regime started within the last 10 days exceeds this value. Higher → fewer but more confident detections. Default: 0.8."
+            width={260}
+          />
           <input
             type="range"
             min={THR_MIN}

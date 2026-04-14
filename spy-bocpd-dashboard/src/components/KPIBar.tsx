@@ -94,8 +94,8 @@ export default function KPIBar({ data, focusDate, isHovering }: Props) {
       <KPIRow
         label="CP Signal"
         value={`${signalPct.toFixed(1)}%`}
-        desc={`short_run_prob  ·  ${signalHigh ? 'HIGH — regime change likely' : 'below threshold'}`}
-        tooltip="P(run length < 10): posterior probability that a changepoint occurred within the last 10 trading days. Values above the threshold trigger a detected changepoint."
+        desc={`P(new regime within 10 days)  ·  ${signalHigh ? 'HIGH — regime change likely' : 'below threshold'}`}
+        tooltip="Probability that a new market regime started within the last 10 trading days, as estimated by the BOCPD posterior. Spikes above the threshold trigger a detected changepoint."
         valueClass={signalHigh ? 'text-red' : 'text-amber'}
       />
       <KPIRow
@@ -108,8 +108,8 @@ export default function KPIBar({ data, focusDate, isHovering }: Props) {
       <KPIRow
         label="Run Length"
         value={`${runLength}`}
-        desc={`days in current regime  ·  Seg #${currentSeg?.id ?? '—'}`}
-        tooltip="argmax_r P(r_t = r | data): most probable number of trading days elapsed since the last changepoint. Drops to ~0 after each detected changepoint."
+        desc={`MAP run length (≠ segment n_days)  ·  Seg #${currentSeg?.id ?? '—'}`}
+        tooltip="argmax_r P(r_t = r | data): most probable run length at this date. Distinct from n_days — the posterior mode may be 5–6 even at a changepoint because P(r<10) is spread across 0–9."
         valueClass="text-blue"
       />
     </div>

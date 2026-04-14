@@ -188,7 +188,7 @@ export default function PriceChangepointTimeline({ data, onFocusDateChange, onHo
         </div>
 
         {/* Segment legend */}
-        <div className="flex items-center gap-1.5 flex-wrap justify-end max-w-[200px]">
+        <div className="flex items-center gap-2 flex-wrap justify-end max-w-[340px]">
           {regime_segments.map((seg, i) => (
             <div key={seg.id} className="flex items-center gap-1" title={`Seg #${seg.id}  ${seg.start} – ${seg.end}`}>
               <span className="w-4 h-0.5 rounded flex-shrink-0" style={{ background: segColor(i) }} />
@@ -197,15 +197,6 @@ export default function PriceChangepointTimeline({ data, onFocusDateChange, onHo
           ))}
         </div>
 
-        {/* Param badges */}
-        <div className="flex gap-1.5 items-center flex-shrink-0">
-          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-dim text-blue border border-blue/20" title="Expected days between changepoints">
-            λ={metadata.lambda}
-          </span>
-          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-dim text-amber border border-amber/20" title="Signal threshold for changepoint detection">
-            thr={metadata.threshold}
-          </span>
-        </div>
       </div>
 
       {/* ── Panel 1: Price + Brush ── */}
@@ -289,7 +280,7 @@ export default function PriceChangepointTimeline({ data, onFocusDateChange, onHo
             text="P(run length < 10) — the posterior probability that fewer than 10 days have elapsed since a changepoint. High values (above threshold) indicate a regime change likely just occurred."
             width={260}
           />
-          <span className="text-[9px] font-mono text-t3 ml-auto">short_run_prob  ·  0 – 100%</span>
+          <span className="text-[9px] font-mono text-t3 ml-auto">P(regime change within last 10 days)  ·  0 – 100%</span>
         </div>
         <div className="flex-1 min-h-0 px-2 pb-1">
           <ResponsiveContainer width="100%" height="100%">
@@ -323,7 +314,7 @@ export default function PriceChangepointTimeline({ data, onFocusDateChange, onHo
                 stroke="#ef4444"
                 strokeWidth={0.8}
                 strokeDasharray="4 4"
-                label={{ value: `thr=${metadata.threshold}`, position: 'right', fontSize: 8, fill: '#ef4444', fontFamily: "'JetBrains Mono',monospace" }}
+                label={{ value: `thr=${metadata.threshold}`, position: 'insideTopRight', fontSize: 8, fill: '#ef4444', fontFamily: "'JetBrains Mono',monospace" }}
               />
               <Area
                 type="monotone"
@@ -341,7 +332,7 @@ export default function PriceChangepointTimeline({ data, onFocusDateChange, onHo
       </div>
 
       {/* ── Panel 3: Run Length argmax ── */}
-      <div className="flex flex-col h-[90px] flex-shrink-0 border-t border-border/50">
+      <div className="flex flex-col h-[104px] flex-shrink-0 border-t border-border/50">
         <div className="flex items-center gap-1.5 px-3 pt-1 pb-0 flex-shrink-0">
           <span className="text-[9px] font-medium uppercase tracking-widest text-t3">Run Length  argmax(t)</span>
           <InfoTooltip
@@ -352,7 +343,7 @@ export default function PriceChangepointTimeline({ data, onFocusDateChange, onHo
         </div>
         <div className="flex-1 min-h-0 px-2 pb-1">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={slicedData} margin={{ top: 2, right: 12, bottom: 0, left: 8 }}>
+            <LineChart data={slicedData} margin={{ top: 2, right: 12, bottom: 6, left: 8 }}>
               <CartesianGrid {...gridStyle} vertical={false} />
               <XAxis
                 dataKey="date"

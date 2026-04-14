@@ -1,5 +1,6 @@
 import type { BOCPDData, Segment } from '../types/bocpd'
 import { segColor } from './PriceChangepointTimeline'
+import { InfoTooltip } from './InfoTooltip'
 
 interface Props {
   data: BOCPDData
@@ -47,13 +48,28 @@ export default function SegmentStatsPanel({ data, focusDate }: Props) {
                 Segment
               </th>
               <th className="text-right px-2 py-2 text-[9px] font-sans uppercase tracking-widest text-t3 font-medium">
-                Days
+                <span className="inline-flex items-center gap-1 justify-end">
+                  Days
+                  <InfoTooltip text="Number of trading days in this regime segment." width={200} />
+                </span>
               </th>
               <th className="text-right px-2 py-2 text-[9px] font-sans uppercase tracking-widest text-t3 font-medium">
-                μ Ann
+                <span className="inline-flex items-center gap-1 justify-end">
+                  Ret Ann
+                  <InfoTooltip
+                    text="Annualized mean log-return = mean(daily log-ret) × 252. Excludes the triggering return on the changepoint day — that shock belongs to the regime transition, not the new regime's internal dynamics."
+                    width={260}
+                  />
+                </span>
               </th>
               <th className="text-right pl-2 pr-4 py-2 text-[9px] font-sans uppercase tracking-widest text-t3 font-medium">
-                σ Ann
+                <span className="inline-flex items-center gap-1 justify-end">
+                  Vol Ann
+                  <InfoTooltip
+                    text="Annualized volatility = std(daily log-ret, ddof=1) × √252. Uses √252 (not ×252) because variance is additive — std scales with the square root of time."
+                    width={260}
+                  />
+                </span>
               </th>
             </tr>
           </thead>

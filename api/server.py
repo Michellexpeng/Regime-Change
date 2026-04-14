@@ -91,10 +91,17 @@ def run_bocpd(ticker: str, start: str, end: str, lambda_: int = 250, threshold: 
     segments = []
     for sid in range(len(boundaries) - 1):
         s, e = boundaries[sid], boundaries[sid + 1]
-        seg_rets = log_returns.values[s:e]
-        n = e - s
-        mean_ann = float(np.mean(seg_rets)) * 252 if n > 1 else 0.0
-        std_ann  = float(np.std(seg_rets, ddof=1)) * np.sqrt(252) if n > 1 else 0.0
+        # For segments after the first, skip log_returns[s]: that return is
+        # log(close[s]) - log(close[s-1]), i.e. the shock that triggered the
+        # changepoint.  It belongs to the transition, not the new regime's
+        # internal dynamics, so including it distorts μ/σ for short segments.
+        stats_start = s + 1 if sid > 0 else s
+        seg_rets = log_returns.values[stats_start:e]
+        n = e - s   # n_days spans the full date range of the segment
+        # Annualise: ×252 for mean (linear scaling), ×√252 for std
+        # (variance is additive → std scales with √time, not time)
+        mean_ann = float(np.mean(seg_rets)) * 252       if len(seg_rets) > 1 else 0.0
+        std_ann  = float(np.std(seg_rets, ddof=1)) * np.sqrt(252) if len(seg_rets) > 1 else 0.0
         segments.append({
             "id": sid,
             "start": str(dates[s].date()),
