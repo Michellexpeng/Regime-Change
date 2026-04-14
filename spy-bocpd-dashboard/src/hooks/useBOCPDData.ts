@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 import type { BOCPDData } from '../types/bocpd'
 import staticData from '../data/bocpd_data.json'
 
-const API_BASE = 'http://localhost:8765'
+const API_BASE = 'https://regime-change.onrender.com'
 
 export interface FetchParams {
   ticker: string
