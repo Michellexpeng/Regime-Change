@@ -1,13 +1,13 @@
 import { useMemo, memo } from 'react'
-import type { HMMData, StateParam } from '../types/hmm'
+import type { HMMData, StateParam, RegimeLabel } from '../types/hmm'
 import { useHoverDate } from '../hooks/hoverStore'
+import { COLORS } from '../theme/colors'
 
-const HMM_COLORS = {
-  bull:    '#22c55e',
-  neutral: '#f59e0b',
-  bear:    '#ef4444',
+const HMM_COLORS: Record<RegimeLabel, string> = {
+  bull:    COLORS.green,
+  neutral: COLORS.amber,
+  bear:    COLORS.red,
 } as const
-type RegimeLabel = 'bull' | 'neutral' | 'bear'
 
 const LABEL_ORDER: RegimeLabel[] = ['bull', 'neutral', 'bear']
 

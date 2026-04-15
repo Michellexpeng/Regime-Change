@@ -12,33 +12,17 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from 'recharts'
-import type { HMMData } from '../types/hmm'
+import type { HMMData, RegimeLabel } from '../types/hmm'
 import { hoverStore } from '../hooks/hoverStore'
+import { downsample } from '../utils/downsample'
+import { AXIS_STYLE, GRID_STYLE, PANEL_HEIGHT } from '../theme/chartStyles'
+import { COLORS } from '../theme/colors'
 
-const HMM_COLORS = {
-  bull:    '#22c55e',
-  neutral: '#f59e0b',
-  bear:    '#ef4444',
+const HMM_COLORS: Record<RegimeLabel, string> = {
+  bull:    COLORS.green,
+  neutral: COLORS.amber,
+  bear:    COLORS.red,
 } as const
-type RegimeLabel = 'bull' | 'neutral' | 'bear'
-
-// Shared axis/grid styles (copied from PriceChangepointTimeline)
-const axisStyle = { fontSize: 10, fontFamily: "'JetBrains Mono', monospace", fill: '#6b849e' }
-const gridStyle = { stroke: '#1e2d45', strokeDasharray: '2 4' }
-
-function downsample<T>(
-  arr: T[], max: number,
-  anchors?: Set<string>, getDate?: (d: T) => string,
-): T[] {
-  if (arr.length <= max) return arr
-  const step = Math.ceil(arr.length / max)
-  return arr.filter(
-    (d, i) =>
-      i % step === 0 ||
-      i === arr.length - 1 ||
-      (anchors && getDate ? anchors.has(getDate(d)) : false),
-  )
-}
 
 interface MergedRow {
   date: string
@@ -242,18 +226,18 @@ function HMMPriceRegimeChart({ data, onFocusDateChange }: Props) {
             }}
             onMouseLeave={() => hoverStore.set(null)}
           >
-            <CartesianGrid {...gridStyle} vertical={false} />
+            <CartesianGrid {...GRID_STYLE} vertical={false} />
             <XAxis
               dataKey="date"
               ticks={xTicks}
               tickFormatter={(v: string) => v.slice(0, 4)}
-              tick={axisStyle}
+              tick={AXIS_STYLE}
               axisLine={false}
               tickLine={false}
               height={18}
             />
             <YAxis
-              tick={axisStyle}
+              tick={AXIS_STYLE}
               axisLine={false}
               tickLine={false}
               width={52}
@@ -311,7 +295,7 @@ function HMMPriceRegimeChart({ data, onFocusDateChange }: Props) {
       </div>
 
       {/* Panel 2: State Probabilities */}
-      <div className="flex flex-col h-[100px] flex-shrink-0 border-t border-border/50">
+      <div className="flex flex-col flex-shrink-0 border-t border-border/50" style={{ height: PANEL_HEIGHT.STATE_PROBS }}>
         <div className="flex items-center gap-1.5 px-3 pt-1 pb-0 flex-shrink-0">
           <span className="text-[9px] font-medium uppercase tracking-widest text-t3">
             State Probabilities
@@ -323,11 +307,11 @@ function HMMPriceRegimeChart({ data, onFocusDateChange }: Props) {
         <div className="flex-1 min-h-0 px-2 pb-1">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={slicedData} margin={{ top: 2, right: 12, bottom: 0, left: 8 }}>
-              <CartesianGrid {...gridStyle} vertical={false} />
+              <CartesianGrid {...GRID_STYLE} vertical={false} />
               <XAxis dataKey="date" hide />
               <YAxis
                 domain={[0, 1]}
-                tick={axisStyle}
+                tick={AXIS_STYLE}
                 axisLine={false}
                 tickLine={false}
                 width={52}
@@ -370,7 +354,7 @@ function HMMPriceRegimeChart({ data, onFocusDateChange }: Props) {
       </div>
 
       {/* Panel 3: Model Confidence */}
-      <div className="flex flex-col h-[88px] flex-shrink-0 border-t border-border/50">
+      <div className="flex flex-col flex-shrink-0 border-t border-border/50" style={{ height: PANEL_HEIGHT.CONFIDENCE }}>
         <div className="flex items-center gap-1.5 px-3 pt-1 pb-0 flex-shrink-0">
           <span className="text-[9px] font-medium uppercase tracking-widest text-t3">
             Model Confidence
@@ -382,10 +366,10 @@ function HMMPriceRegimeChart({ data, onFocusDateChange }: Props) {
         <div className="flex-1 min-h-0 px-2 pb-1">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={slicedData} margin={{ top: 2, right: 12, bottom: 6, left: 8 }}>
-              <CartesianGrid {...gridStyle} vertical={false} />
+              <CartesianGrid {...GRID_STYLE} vertical={false} />
               <XAxis
                 dataKey="date"
-                tick={axisStyle}
+                tick={AXIS_STYLE}
                 axisLine={false}
                 tickLine={false}
                 height={14}
@@ -394,7 +378,7 @@ function HMMPriceRegimeChart({ data, onFocusDateChange }: Props) {
               />
               <YAxis
                 domain={[0, 1]}
-                tick={axisStyle}
+                tick={AXIS_STYLE}
                 axisLine={false}
                 tickLine={false}
                 width={52}
@@ -404,10 +388,10 @@ function HMMPriceRegimeChart({ data, onFocusDateChange }: Props) {
               <Line
                 type="monotone"
                 dataKey="confidence"
-                stroke="#3b82f6"
+                stroke={COLORS.blue}
                 strokeWidth={1.4}
                 dot={false}
-                activeDot={{ r: 3, fill: '#3b82f6' }}
+                activeDot={{ r: 3, fill: COLORS.blue }}
                 isAnimationActive={false}
               />
             </LineChart>

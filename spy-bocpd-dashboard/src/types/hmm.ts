@@ -1,3 +1,5 @@
+export type RegimeLabel = 'bull' | 'neutral' | 'bear'
+
 export interface StatePoint {
   date: string
   state: number
