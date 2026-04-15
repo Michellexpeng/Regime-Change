@@ -105,8 +105,8 @@ def run_bocpd(ticker: str, start: str, end: str, lambda_: int = 250, threshold: 
             "day_pct":        round(day_pct, 6),
         },
         "prices": [
-            {"date": str(d.date()), "close": round(float(v), 2)}
-            for d, v in zip(dates, close_prices.values[1:])
+            {"date": str(d.date()), "close": round(float(close_prices.loc[d]), 2)}
+            for d in dates
         ],
         "short_run_prob": [
             {"date": str(d.date()), "prob": round(float(p), 6)}
