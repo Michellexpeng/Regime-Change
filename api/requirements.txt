@@ -1,6 +1,6 @@
-flask
+flask==3.1.0
 gunicorn
-numpy
-scipy
-yfinance
-hmmlearn
+numpy==1.26.4
+scipy==1.17.1
+yfinance==0.2.66
+hmmlearn==0.3.3
