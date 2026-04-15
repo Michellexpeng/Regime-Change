@@ -8,6 +8,7 @@ const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8765'
 // Quick tickers that have pre-computed static JSON in public/data/
 const STATIC_TICKERS = new Set(['SPY', 'QQQ', 'IWM', 'DIA', 'AAPL', 'TSLA', 'NVDA', 'GLD'])
 const DEFAULT_START  = '2016-01-01'
+const STATIC_LAST_DATE = '2026-04-15'   // last date in pre-computed JSONs
 
 export interface HMMFetchParams {
   ticker: string
@@ -22,8 +23,11 @@ export interface UseHMMDataReturn {
   fetch: (params: HMMFetchParams) => Promise<void>
 }
 
-function isDefaultParams(params: HMMFetchParams): boolean {
-  return params.start === DEFAULT_START
+function canUseStatic(params: HMMFetchParams): boolean {
+  return (
+    params.start === DEFAULT_START &&
+    params.end   <= STATIC_LAST_DATE
+  )
 }
 
 export function useHMMData(): UseHMMDataReturn {
@@ -36,7 +40,7 @@ export function useHMMData(): UseHMMDataReturn {
     setError(null)
 
     // Use pre-computed static JSON for quick tickers with default params
-    if (STATIC_TICKERS.has(params.ticker) && isDefaultParams(params)) {
+    if (STATIC_TICKERS.has(params.ticker) && canUseStatic(params)) {
       try {
         const res  = await fetch(`/data/hmm_${params.ticker}.json`)
         const json = await res.json() as HMMData

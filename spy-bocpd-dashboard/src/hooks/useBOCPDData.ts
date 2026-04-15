@@ -10,6 +10,7 @@ const STATIC_TICKERS = new Set(['SPY', 'QQQ', 'IWM', 'DIA', 'AAPL', 'TSLA', 'NVD
 const DEFAULT_LAMBDA    = 250
 const DEFAULT_THRESHOLD = 0.8
 const DEFAULT_START     = '2016-01-01'
+const STATIC_LAST_DATE  = '2026-04-15'   // last date in pre-computed JSONs
 
 export interface FetchParams {
   ticker: string
@@ -26,11 +27,12 @@ export interface UseBOCPDDataReturn {
   fetch: (params: FetchParams) => Promise<void>
 }
 
-function isDefaultParams(params: FetchParams): boolean {
+function canUseStatic(params: FetchParams): boolean {
   return (
     params.lambda    === DEFAULT_LAMBDA    &&
     params.threshold === DEFAULT_THRESHOLD &&
-    params.start     === DEFAULT_START
+    params.start     === DEFAULT_START     &&
+    params.end       <= STATIC_LAST_DATE   // static data covers the requested range
   )
 }
 
@@ -44,7 +46,7 @@ export function useBOCPDData(): UseBOCPDDataReturn {
     setError(null)
 
     // Use pre-computed static JSON for quick tickers with default params
-    if (STATIC_TICKERS.has(params.ticker) && isDefaultParams(params)) {
+    if (STATIC_TICKERS.has(params.ticker) && canUseStatic(params)) {
       try {
         const res  = await fetch(`/data/bocpd_${params.ticker}.json`)
         const json = await res.json() as BOCPDData

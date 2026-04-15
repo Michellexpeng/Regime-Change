@@ -11,11 +11,15 @@ import HMMStateStatsPanel from './components/HMMStateStatsPanel'
 import { ChartErrorBoundary } from './components/ChartErrorBoundary'
 
 const TODAY = new Date().toISOString().slice(0, 10)
+const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8765'
 
 export default function App() {
   const { data, loading, error, fetch } = useBOCPDData()
   const { data: hmmData, loading: hmmLoading, error: hmmError, fetch: fetchHMM } = useHMMData()
   const [method, setMethod] = useState<'bocpd' | 'hmm'>('bocpd')
+
+  // Warm up the backend on mount so it's ready when the user clicks Apply
+  useEffect(() => { window.fetch(`${API_BASE}/health`).catch(() => {}) }, [])
 
   const activeLoading = method === 'hmm' ? hmmLoading : loading
   const activeError   = method === 'hmm' ? hmmError   : error
