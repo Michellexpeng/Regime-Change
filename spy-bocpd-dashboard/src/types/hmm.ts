@@ -12,6 +12,13 @@ export interface StateParam {
   vol_mean: number
 }
 
+export interface StateProb {
+  date: string
+  bull: number
+  neutral: number
+  bear: number
+}
+
 export interface HMMSegment {
   id: number
   label: 'bear' | 'neutral' | 'bull'
@@ -37,6 +44,7 @@ export interface HMMData {
   changepoints: Array<{ date: string; index: number }>
   regime_segments: HMMSegment[]
   state_sequence: StatePoint[]
+  state_probs: StateProb[]
   state_params: StateParam[]
   transition_matrix: number[][]
 }

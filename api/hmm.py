@@ -65,6 +65,15 @@ def run_hmm(ticker: str, start: str, end: str, n_states: int = _N_STATES) -> dic
             "std_annual":          round(std_ann, 6),
         })
 
+    # ── Per-day posterior state probabilities ─────────────────────────────
+    posteriors = model.predict_proba(features)  # shape (T, n_states)
+    state_probs = []
+    for t in range(T):
+        row: dict = {"date": str(dates[t].date())}
+        for orig_state, label in LABEL_MAP.items():
+            row[label] = round(float(posteriors[t][orig_state]), 6)
+        state_probs.append(row)
+
     # ── Per-state parameters ───────────────────────────────────────────────
     state_params = []
     for orig_state, label in LABEL_MAP.items():
@@ -118,6 +127,7 @@ def run_hmm(ticker: str, start: str, end: str, n_states: int = _N_STATES) -> dic
             {"date": str(d.date()), "state": int(s), "label": LABEL_MAP[int(s)]}
             for d, s in zip(dates, hidden_states)
         ],
+        "state_probs": state_probs,
         "state_params": state_params,
         "transition_matrix": model.transmat_.tolist(),
     })
