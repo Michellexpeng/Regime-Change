@@ -64,20 +64,24 @@ function PriceTooltip({
   label?: string
 }) {
   if (!active || !payload?.length) return null
-  const priceEntry = payload.find(
-    p => (p.dataKey === 'bull_close' || p.dataKey === 'neutral_close' || p.dataKey === 'bear_close') && p.value != null,
-  )
+  // Prefer the current state's key: bull > neutral > bear (order matters at boundaries)
+  const order: Array<`${RegimeLabel}_close`> = ['bull_close', 'neutral_close', 'bear_close']
+  const priceEntry = order
+    .map(key => payload.find(p => p.dataKey === key && p.value != null))
+    .find(Boolean)
   const regime = priceEntry?.dataKey.replace('_close', '') as RegimeLabel | undefined
+  const color  = regime ? HMM_COLORS[regime] : '#94a3b8'
   return (
     <div className="bg-card border border-border rounded px-3 py-2 text-xs font-mono space-y-1 shadow-xl">
       <div className="text-t3 font-sans text-[10px]">{label}</div>
       {priceEntry && (
-        <div style={{ color: priceEntry.color }} className="font-medium">
-          ${priceEntry.value?.toFixed(2)}
+        <div className="flex items-center gap-1.5 font-medium">
+          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
+          <span style={{ color }}>${priceEntry.value?.toFixed(2)}</span>
         </div>
       )}
       {regime && (
-        <div className="text-t3 capitalize">{regime}</div>
+        <div className="capitalize text-t3">{regime}</div>
       )}
     </div>
   )
@@ -265,7 +269,7 @@ export default function HMMPriceRegimeChart({ data, onFocusDateChange, onHoverDa
               strokeWidth={1.5}
               dot={false}
               connectNulls={false}
-              activeDot={{ r: 3, fill: HMM_COLORS.bull }}
+              activeDot={false}
               isAnimationActive={false}
             />
             <Line
@@ -275,9 +279,11 @@ export default function HMMPriceRegimeChart({ data, onFocusDateChange, onHoverDa
               strokeWidth={1.5}
               dot={false}
               connectNulls={false}
-              activeDot={{ r: 3, fill: HMM_COLORS.neutral }}
+              activeDot={false}
               isAnimationActive={false}
             />
+            {/* bear rendered last so its activeDot would win — use false on all,
+                tooltip already shows the correct state label and color */}
             <Line
               type="monotone"
               dataKey="bear_close"
@@ -285,7 +291,7 @@ export default function HMMPriceRegimeChart({ data, onFocusDateChange, onHoverDa
               strokeWidth={1.5}
               dot={false}
               connectNulls={false}
-              activeDot={{ r: 3, fill: HMM_COLORS.bear }}
+              activeDot={false}
               isAnimationActive={false}
             />
 
