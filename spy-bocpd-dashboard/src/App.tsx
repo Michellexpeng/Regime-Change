@@ -8,6 +8,7 @@ import PriceChangepointTimeline from './components/PriceChangepointTimeline'
 import SegmentStatsPanel from './components/SegmentStatsPanel'
 import HMMPriceRegimeChart from './components/HMMPriceRegimeChart'
 import HMMStateStatsPanel from './components/HMMStateStatsPanel'
+import { ChartErrorBoundary } from './components/ChartErrorBoundary'
 
 const TODAY = new Date().toISOString().slice(0, 10)
 
@@ -83,15 +84,19 @@ export default function App() {
         {/* Left panel */}
         <div className="flex flex-col flex-1 min-w-0">
           {method === 'hmm' && hmmData ? (
-            <HMMPriceRegimeChart
-              data={hmmData}
-              onFocusDateChange={handleFocusDate}
-            />
+            <ChartErrorBoundary label="HMM Chart">
+              <HMMPriceRegimeChart
+                data={hmmData}
+                onFocusDateChange={handleFocusDate}
+              />
+            </ChartErrorBoundary>
           ) : (
-            <PriceChangepointTimeline
-              data={data}
-              onFocusDateChange={handleFocusDate}
-            />
+            <ChartErrorBoundary label="BOCPD Timeline">
+              <PriceChangepointTimeline
+                data={data}
+                onFocusDateChange={handleFocusDate}
+              />
+            </ChartErrorBoundary>
           )}
         </div>
 
