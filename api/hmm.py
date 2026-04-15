@@ -48,15 +48,22 @@ def run_hmm(ticker: str, start: str, end: str, n_states: int = _N_STATES) -> dic
         m.fit(features)
         if not m.monitor_.converged:
             continue
-        # Score = sum of pairwise distances between state means.
-        # Prefer solutions where states are far apart in feature space.
-        means = m.means_
-        dist  = sum(
-            np.linalg.norm(means[i] - means[j])
+        # Score by volatility-space separation — aligns with the labeling
+        # criterion (lowest vol = bull, highest = bear). Standardised-feature
+        # distance does not account for the unequal variance scaling, so the
+        # best-standardised model and the best-labelled model could diverge.
+        hidden_states_m = m.predict(features)
+        state_vol_means_score = [
+            float(np.mean(roll_vol.values[hidden_states_m == s]))
+            if (hidden_states_m == s).any() else 0.0
+            for s in range(n_states)
+        ]
+        vol_dist = sum(
+            abs(state_vol_means_score[i] - state_vol_means_score[j])
             for i in range(n_states) for j in range(i + 1, n_states)
         )
-        if dist > best_score:
-            best_score = dist
+        if vol_dist > best_score:
+            best_score = vol_dist
             best_model = m
     if best_model is None:
         # None of the 10 restarts converged — use last model but warn
