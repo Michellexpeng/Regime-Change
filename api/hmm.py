@@ -28,7 +28,7 @@ def run_hmm(ticker: str, start: str, end: str, n_states: int = _N_STATES) -> dic
     # Standardize features for numerical stability (prevents singular covariance)
     feat_mean = features_raw.mean(axis=0)
     feat_std  = features_raw.std(axis=0)
-    feat_std[feat_std == 0] = 1.0          # guard against zero-variance columns
+    feat_std[feat_std < 1e-10] = 1.0       # guard against zero/near-zero variance columns
     features  = (features_raw - feat_mean) / feat_std
 
     # ── Fit HMM ────────────────────────────────────────────────────────────
@@ -58,7 +58,17 @@ def run_hmm(ticker: str, start: str, end: str, n_states: int = _N_STATES) -> dic
         if dist > best_score:
             best_score = dist
             best_model = m
-    model = best_model or m   # fallback to last if none converged
+    if best_model is None:
+        # None of the 10 restarts converged — use last model but warn
+        import warnings
+        warnings.warn(
+            f"No HMM model converged for {ticker} ({start}–{end}). "
+            "Results may be unreliable.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        best_model = m
+    model = best_model
 
     hidden_states = model.predict(features)
 
@@ -146,8 +156,8 @@ def run_hmm(ticker: str, start: str, end: str, n_states: int = _N_STATES) -> dic
             "day_pct":        round(day_pct, 6),
         },
         "prices": [
-            {"date": str(d.date()), "close": round(float(v), 2)}
-            for d, v in zip(dates, close_prices.values[1:])
+            {"date": str(d.date()), "close": round(float(close_prices.loc[d]), 2)}
+            for d in dates
         ],
         "changepoints": [
             {"date": str(dates[i].date()), "index": int(i)}
