@@ -5,6 +5,10 @@ import { fetchWithRetry } from '../utils/fetchWithRetry'
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8765'
 
+// Quick tickers that have pre-computed static JSON in public/data/
+const STATIC_TICKERS = new Set(['SPY', 'QQQ', 'IWM', 'DIA', 'AAPL', 'TSLA', 'NVDA', 'GLD'])
+const DEFAULT_START  = '2016-01-01'
+
 export interface HMMFetchParams {
   ticker: string
   start: string
@@ -18,6 +22,10 @@ export interface UseHMMDataReturn {
   fetch: (params: HMMFetchParams) => Promise<void>
 }
 
+function isDefaultParams(params: HMMFetchParams): boolean {
+  return params.start === DEFAULT_START
+}
+
 export function useHMMData(): UseHMMDataReturn {
   const [data,    setData]    = useState<HMMData>(staticData as HMMData)
   const [loading, setLoading] = useState(false)
@@ -27,6 +35,21 @@ export function useHMMData(): UseHMMDataReturn {
     setLoading(true)
     setError(null)
 
+    // Use pre-computed static JSON for quick tickers with default params
+    if (STATIC_TICKERS.has(params.ticker) && isDefaultParams(params)) {
+      try {
+        const res  = await fetch(`/data/hmm_${params.ticker}.json`)
+        const json = await res.json() as HMMData
+        setData(json)
+        return
+      } catch {
+        // fall through to API if static file fails
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    // Fall back to live API for custom params or unknown tickers
     const url = new URL(`${API_BASE}/hmm`)
     url.searchParams.set('ticker', params.ticker)
     url.searchParams.set('start',  params.start)
