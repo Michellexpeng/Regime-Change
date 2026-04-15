@@ -69,7 +69,7 @@ export default function ControlBar({ defaults, loading, onSubmit }: Props) {
         BOCPD Dashboard
       </span>
 
-      <div className="flex gap-0.5 bg-bg border border-border rounded p-0.5">
+      <div className="flex gap-0.5 bg-bg border border-border rounded p-0.5" role="group" aria-label="Detection method">
         {(['bocpd', 'hmm'] as const).map((m) => (
           <button
             key={m}
@@ -81,6 +81,8 @@ export default function ControlBar({ defaults, loading, onSubmit }: Props) {
               }
             }}
             disabled={loading}
+            aria-pressed={method === m}
+            aria-label={`Switch to ${m.toUpperCase()} detection method`}
             className={`px-2.5 py-0.5 text-[10px] font-mono rounded transition-colors ${
               method === m
                 ? 'bg-blue text-white'
@@ -223,6 +225,7 @@ export default function ControlBar({ defaults, loading, onSubmit }: Props) {
         <button
           type="submit"
           disabled={!canSubmit}
+          aria-label="Apply parameters and run detection"
           className={`flex items-center gap-2 px-4 py-1 rounded text-[12px] font-medium transition-all whitespace-nowrap ${
             loading
               ? 'bg-blue-dim text-blue border border-blue/30 cursor-not-allowed'

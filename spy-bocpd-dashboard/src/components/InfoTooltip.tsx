@@ -39,6 +39,8 @@ export function InfoTooltip({ text, width = 240 }: Props) {
       >
         <svg
           width="11" height="11" viewBox="0 0 12 12" fill="none"
+          aria-label="More information"
+          role="img"
           className="text-t3 hover:text-t2 transition-colors duration-100"
         >
           <circle cx="6" cy="6" r="5.5" stroke="currentColor" strokeWidth="1" />
