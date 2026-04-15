@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import type { HMMData } from '../types/hmm'
 import staticData from '../data/hmm_data.json'
+import { fetchWithRetry } from '../utils/fetchWithRetry'
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8765'
 
@@ -32,7 +33,7 @@ export function useHMMData(): UseHMMDataReturn {
     url.searchParams.set('end',    params.end)
 
     try {
-      const res  = await fetch(url.toString())
+      const res  = await fetchWithRetry(url.toString())
       const json = await res.json() as HMMData & { error?: string }
 
       if (!res.ok || json.error) {
@@ -41,8 +42,8 @@ export function useHMMData(): UseHMMDataReturn {
       }
 
       setData(json)
-    } catch {
-      setError('Cannot reach API server. Run: python server.py')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unexpected error')
     } finally {
       setLoading(false)
     }

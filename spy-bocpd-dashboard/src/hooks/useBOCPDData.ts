@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import type { BOCPDData } from '../types/bocpd'
 import staticData from '../data/bocpd_data.json'
+import { fetchWithRetry } from '../utils/fetchWithRetry'
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8765'
 
@@ -36,7 +37,7 @@ export function useBOCPDData(): UseBOCPDDataReturn {
     url.searchParams.set('threshold', String(params.threshold))
 
     try {
-      const res = await fetch(url.toString())
+      const res = await fetchWithRetry(url.toString())
       const json = await res.json() as BOCPDData & { error?: string }
 
       if (!res.ok || json.error) {
@@ -45,8 +46,8 @@ export function useBOCPDData(): UseBOCPDDataReturn {
       }
 
       setData(json)
-    } catch {
-      setError('Cannot reach API server. Run: python scripts/server.py')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unexpected error')
     } finally {
       setLoading(false)
     }
