@@ -127,15 +127,20 @@ function ConfTooltip({
 export default function HMMPriceRegimeChart({ data, onFocusDateChange, onHoverDateChange }: Props) {
   const merged = useMemo<MergedRow[]>(() => {
     return data.prices.map((p, i) => {
-      const seq   = data.state_sequence?.[i]
-      const probs = data.state_probs?.[i]
-      const label = seq?.label as RegimeLabel | undefined
-      const maxP  = Math.max(probs?.bull ?? 0, probs?.neutral ?? 0, probs?.bear ?? 0)
+      const seq      = data.state_sequence?.[i]
+      const prevSeq  = data.state_sequence?.[i - 1]
+      const probs    = data.state_probs?.[i]
+      const label    = seq?.label as RegimeLabel | undefined
+      const prevLabel = prevSeq?.label as RegimeLabel | undefined
+      // At a state boundary, include the transition point in the ending state too
+      // so lines connect seamlessly rather than leaving a gap
+      const isBoundary = prevLabel !== undefined && prevLabel !== label
+      const maxP = Math.max(probs?.bull ?? 0, probs?.neutral ?? 0, probs?.bear ?? 0)
       return {
         date:          p.date,
-        bull_close:    label === 'bull'    ? p.close : null,
-        neutral_close: label === 'neutral' ? p.close : null,
-        bear_close:    label === 'bear'    ? p.close : null,
+        bull_close:    (label === 'bull'    || (isBoundary && prevLabel === 'bull'))    ? p.close : null,
+        neutral_close: (label === 'neutral' || (isBoundary && prevLabel === 'neutral')) ? p.close : null,
+        bear_close:    (label === 'bear'    || (isBoundary && prevLabel === 'bear'))    ? p.close : null,
         p_bull:    probs?.bull    ?? 0,
         p_neutral: probs?.neutral ?? 0,
         p_bear:    probs?.bear    ?? 0,
