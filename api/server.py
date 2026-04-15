@@ -4,12 +4,14 @@ Usage: python scripts/server.py
 
 Endpoints:
   GET /bocpd?ticker=SPY&start=2016-01-01&end=2026-04-14
+  GET /hmm?ticker=SPY&start=2016-01-01&end=2026-04-14
   GET /health
 """
 
 from datetime import datetime
 from flask import Flask, request, jsonify
 from bocpd import run_bocpd
+from hmm import run_hmm
 
 app = Flask(__name__)
 
@@ -55,9 +57,35 @@ def bocpd():
         return jsonify({"error": f"Server error: {e}"}), 500
 
 
+@app.route("/hmm")
+def hmm():
+    ticker = request.args.get("ticker", "SPY").upper().strip()
+    start  = request.args.get("start",  "2016-01-01")
+    end    = request.args.get("end",    datetime.today().strftime("%Y-%m-%d"))
+
+    try:
+        datetime.strptime(start, "%Y-%m-%d")
+        datetime.strptime(end,   "%Y-%m-%d")
+    except ValueError:
+        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
+
+    if start >= end:
+        return jsonify({"error": "start must be before end."}), 400
+
+    try:
+        print(f"[HMM] {ticker}  {start} → {end}")
+        result = run_hmm(ticker, start, end)
+        return jsonify(result)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": f"Server error: {e}"}), 500
+
+
 if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 8765))
     print(f"BOCPD API server running at http://0.0.0.0:{port}")
     print("  GET /bocpd?ticker=SPY&start=2016-01-01&end=2026-04-14")
+    print("  GET /hmm?ticker=SPY&start=2016-01-01&end=2026-04-14")
     app.run(host="0.0.0.0", port=port, debug=False)
