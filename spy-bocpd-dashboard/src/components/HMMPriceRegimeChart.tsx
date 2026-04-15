@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, memo } from 'react'
 import {
   ComposedChart,
   LineChart,
@@ -13,6 +13,7 @@ import {
   CartesianGrid,
 } from 'recharts'
 import type { HMMData } from '../types/hmm'
+import { hoverStore } from '../hooks/hoverStore'
 
 const HMM_COLORS = {
   bull:    '#22c55e',
@@ -53,7 +54,6 @@ interface MergedRow {
 interface Props {
   data: HMMData
   onFocusDateChange?: (date: string) => void
-  onHoverDateChange?: (date: string | null) => void
 }
 
 function PriceTooltip({
@@ -128,7 +128,7 @@ function ConfTooltip({
   )
 }
 
-export default function HMMPriceRegimeChart({ data, onFocusDateChange, onHoverDateChange }: Props) {
+function HMMPriceRegimeChart({ data, onFocusDateChange }: Props) {
   const merged = useMemo<MergedRow[]>(() => {
     return data.prices.map((p, i) => {
       const seq      = data.state_sequence?.[i]
@@ -238,9 +238,9 @@ export default function HMMPriceRegimeChart({ data, onFocusDateChange, onHoverDa
             margin={{ top: 4, right: 12, bottom: 0, left: 8 }}
             onMouseMove={(state) => {
               const label = state?.activeLabel as string | undefined
-              if (label) onHoverDateChange?.(label)
+              if (label) hoverStore.set(label)
             }}
-            onMouseLeave={() => onHoverDateChange?.(null)}
+            onMouseLeave={() => hoverStore.set(null)}
           >
             <CartesianGrid {...gridStyle} vertical={false} />
             <XAxis
@@ -418,3 +418,4 @@ export default function HMMPriceRegimeChart({ data, onFocusDateChange, onHoverDa
     </div>
   )
 }
+export default memo(HMMPriceRegimeChart)

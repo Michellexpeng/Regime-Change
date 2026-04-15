@@ -1,6 +1,7 @@
 import type { BOCPDData, Segment } from '../types/bocpd'
 import { segColor } from './PriceChangepointTimeline'
 import { InfoTooltip } from './InfoTooltip'
+import { useHoverDate } from '../hooks/hoverStore'
 
 interface Props {
   data: BOCPDData
@@ -10,8 +11,11 @@ interface Props {
 export default function SegmentStatsPanel({ data, focusDate }: Props) {
   const { regime_segments, metadata } = data
 
+  const hoverDate = useHoverDate()
+  const effectiveDate = hoverDate ?? focusDate
+
   const activeId = (
-    [...regime_segments].reverse().find(seg => seg.start <= focusDate) ?? regime_segments[0]
+    [...regime_segments].reverse().find(seg => seg.start <= effectiveDate) ?? regime_segments[0]
   )?.id
 
   function retColor(v: number) {

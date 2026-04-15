@@ -32,21 +32,45 @@ def run_hmm(ticker: str, start: str, end: str, n_states: int = _N_STATES) -> dic
     features  = (features_raw - feat_mean) / feat_std
 
     # ── Fit HMM ────────────────────────────────────────────────────────────
-    model = GaussianHMM(
-        n_components=n_states,
-        covariance_type="full",
-        n_iter=_N_ITER,
-        random_state=_RANDOM_SEED,
-    )
-    model.fit(features)
-
-    # ── State alignment: sort by rolling_vol mean (col 1) ascending ───────
-    # Scaled means preserve ordering → use them to rank states
-    # lowest vol = bull, highest vol = bear
-    order     = np.argsort(model.means_[:, 1])
-    LABEL_MAP = {int(order[0]): "bull", int(order[1]): "neutral", int(order[2]): "bear"}
+    # ── Fit HMM with multiple restarts, pick best-separated solution ─────
+    # A single random seed can land on degenerate solutions where two states
+    # have nearly identical parameters and alternate every day. Running 10
+    # restarts and scoring by inter-state distance avoids this.
+    best_model  = None
+    best_score  = -np.inf
+    for seed in range(10):
+        m = GaussianHMM(
+            n_components=n_states,
+            covariance_type="full",
+            n_iter=_N_ITER,
+            random_state=seed,
+        )
+        m.fit(features)
+        if not m.monitor_.converged:
+            continue
+        # Score = sum of pairwise distances between state means.
+        # Prefer solutions where states are far apart in feature space.
+        means = m.means_
+        dist  = sum(
+            np.linalg.norm(means[i] - means[j])
+            for i in range(n_states) for j in range(i + 1, n_states)
+        )
+        if dist > best_score:
+            best_score = dist
+            best_model = m
+    model = best_model or m   # fallback to last if none converged
 
     hidden_states = model.predict(features)
+
+    # ── State alignment: sort by actual vol_mean ascending ───────────────
+    # lowest vol = bull, highest vol = bear (matches notebook fit_hmm_2d)
+    state_vol_means = [
+        float(np.mean(roll_vol.values[hidden_states == s]))
+        if (hidden_states == s).any() else 0.0
+        for s in range(n_states)
+    ]
+    order     = np.argsort(state_vol_means)          # ascending: lowest vol = bull
+    LABEL_MAP = {int(order[0]): "bull", int(order[1]): "neutral", int(order[2]): "bear"}
 
     # ── Changepoints: days where state changes ─────────────────────────────
     cp_indices = [i for i in range(1, T) if hidden_states[i] != hidden_states[i - 1]]

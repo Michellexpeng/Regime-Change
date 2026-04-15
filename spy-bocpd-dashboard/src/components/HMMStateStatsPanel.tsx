@@ -1,4 +1,6 @@
+import { useMemo, memo } from 'react'
 import type { HMMData, StateParam } from '../types/hmm'
+import { useHoverDate } from '../hooks/hoverStore'
 
 const HMM_COLORS = {
   bull:    '#22c55e',
@@ -31,38 +33,55 @@ function pct(v: number, digits = 1) {
   return `${(v * 100).toFixed(digits)}%`
 }
 
-export default function HMMStateStatsPanel({ data, focusDate }: Props) {
+function HMMStateStatsPanel({ data, focusDate }: Props) {
   const { state_sequence, state_params, transition_matrix, metadata } = data
 
-  // --- Derive current state ---
-  const currentState = (
-    [...state_sequence].reverse().find(s => s.date <= focusDate) ??
-    state_sequence[state_sequence.length - 1]
-  )
+  const hoverDate = useHoverDate()
+  const effectiveDate = hoverDate ?? focusDate
+
+  // --- Derive current state (binary search, O(log n)) ---
+  const currentState = useMemo(() => {
+    if (!state_sequence.length) return undefined
+    if (!effectiveDate) return state_sequence[state_sequence.length - 1]
+    let lo = 0, hi = state_sequence.length - 1
+    let result = state_sequence[0]
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1
+      if (state_sequence[mid].date <= effectiveDate) { result = state_sequence[mid]; lo = mid + 1 }
+      else hi = mid - 1
+    }
+    return result
+  }, [state_sequence, effectiveDate])
   const currentLabel = currentState?.label as RegimeLabel | undefined
 
-  // --- Days fraction per state ---
-  const totalDays = state_sequence.length
-  const daysByLabel: Record<RegimeLabel, number> = { bull: 0, neutral: 0, bear: 0 }
-  for (const s of state_sequence) {
-    if (s.label in daysByLabel) daysByLabel[s.label as RegimeLabel]++
-  }
+  // --- Days fraction per state (only recomputes when data changes) ---
+  const { totalDays, daysByLabel } = useMemo(() => {
+    const counts: Record<RegimeLabel, number> = { bull: 0, neutral: 0, bear: 0 }
+    for (const s of state_sequence) {
+      if (s.label in counts) counts[s.label as RegimeLabel]++
+    }
+    return { totalDays: state_sequence.length, daysByLabel: counts }
+  }, [state_sequence])
 
   // --- Sort state_params by vol_mean ascending (bull first) ---
-  const sortedParams: StateParam[] = [...state_params].sort((a, b) => a.vol_mean - b.vol_mean)
+  const sortedParams = useMemo<StateParam[]>(
+    () => [...state_params].sort((a, b) => a.vol_mean - b.vol_mean),
+    [state_params],
+  )
 
   // --- Transition matrix remapped to bull/neutral/bear order ---
-  const stateForLabel = (label: RegimeLabel) =>
-    state_params.find(p => p.label === label)!.state
-
-  const displayMatrix = LABEL_ORDER.map(fromLabel => {
-    const fromIdx = stateForLabel(fromLabel)
-    return LABEL_ORDER.map(toLabel => {
-      const toIdx = stateForLabel(toLabel)
-      const row = transition_matrix[fromIdx]
-      return row ? (row[toIdx] ?? 0) : 0
+  const displayMatrix = useMemo(() => {
+    const stateForLabel = (label: RegimeLabel) =>
+      state_params.find(p => p.label === label)!.state
+    return LABEL_ORDER.map(fromLabel => {
+      const fromIdx = stateForLabel(fromLabel)
+      return LABEL_ORDER.map(toLabel => {
+        const toIdx = stateForLabel(toLabel)
+        const row = transition_matrix[fromIdx]
+        return row ? (row[toIdx] ?? 0) : 0
+      })
     })
-  })
+  }, [state_params, transition_matrix])
 
   function cellBg(val: number, fromLabel: RegimeLabel) {
     if (val > 0.8) {
@@ -93,7 +112,7 @@ export default function HMMStateStatsPanel({ data, focusDate }: Props) {
 
         <div className="flex items-center gap-3 mb-2.5">
           {currentLabel && <StateBadge label={currentLabel} />}
-          <span className="text-[10px] font-mono text-t3">{currentState?.date ?? focusDate}</span>
+          <span className="text-[10px] font-mono text-t3">{currentState?.date ?? effectiveDate}</span>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
@@ -265,3 +284,4 @@ export default function HMMStateStatsPanel({ data, focusDate }: Props) {
     </div>
   )
 }
+export default memo(HMMStateStatsPanel)

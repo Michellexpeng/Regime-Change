@@ -74,7 +74,12 @@ export default function ControlBar({ defaults, loading, onSubmit }: Props) {
           <button
             key={m}
             type="button"
-            onClick={() => setMethod(m)}
+            onClick={() => {
+              setMethod(m)
+              if (m !== method && !loading && ticker.trim() && start < end && lambdaValid) {
+                onSubmit({ ticker: ticker.toUpperCase().trim(), start, end, lambda: lambdaNum, threshold: thresholdNum, method: m })
+              }
+            }}
             disabled={loading}
             className={`px-2.5 py-0.5 text-[10px] font-mono rounded transition-colors ${
               method === m

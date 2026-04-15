@@ -1,10 +1,10 @@
 import type { BOCPDData } from '../types/bocpd'
 import { InfoTooltip } from './InfoTooltip'
+import { useHoverDate } from '../hooks/hoverStore'
 
 interface Props {
   data: BOCPDData
-  focusDate: string
-  isHovering: boolean
+  focusDate: string   // brush end or last date (from App)
 }
 
 interface KPIRowProps {
@@ -36,13 +36,16 @@ function KPIRow({ label, value, desc, tooltip, valueClass = 'text-t1', up = null
   )
 }
 
-export default function KPIBar({ data, focusDate, isHovering }: Props) {
+export default function KPIBar({ data, focusDate }: Props) {
+  const hoverDate = useHoverDate()
+  const isHovering = hoverDate !== null
+  const effectiveDate = hoverDate ?? focusDate
   const { prices, short_run_prob, run_length_map, changepoints, regime_segments, metadata } = data
 
   const focusIdx = (() => {
     let idx = prices.length - 1
     for (let i = 0; i < prices.length; i++) {
-      if (prices[i].date >= focusDate) { idx = i; break }
+      if (prices[i].date >= effectiveDate) { idx = i; break }
     }
     return idx
   })()
@@ -59,10 +62,10 @@ export default function KPIBar({ data, focusDate, isHovering }: Props) {
 
   const runLength  = run_length_map[focusIdx]?.run_length ?? 0
 
-  const lastCp     = [...changepoints].reverse().find(cp => cp.date <= focusDate)
-  const currentSeg = [...regime_segments].reverse().find(seg => seg.start <= focusDate) ?? regime_segments[0]
+  const lastCp     = [...changepoints].reverse().find(cp => cp.date <= effectiveDate)
+  const currentSeg = [...regime_segments].reverse().find(seg => seg.start <= effectiveDate) ?? regime_segments[0]
 
-  const isAtEnd    = focusDate === prices[prices.length - 1]?.date
+  const isAtEnd    = effectiveDate === prices[prices.length - 1]?.date
 
   return (
     <div className="flex flex-col bg-panel border-b border-border flex-shrink-0">
@@ -78,7 +81,7 @@ export default function KPIBar({ data, focusDate, isHovering }: Props) {
           <span className="text-[10px] font-sans uppercase tracking-widest text-t3 flex-shrink-0">
             {isHovering ? 'Cursor' : isAtEnd ? 'Latest' : 'Brush end'}
           </span>
-          <span className="font-mono text-[13px] font-medium text-t1 tabular-nums">{focusDate}</span>
+          <span className="font-mono text-[13px] font-medium text-t1 tabular-nums">{effectiveDate}</span>
         </div>
       </div>
 

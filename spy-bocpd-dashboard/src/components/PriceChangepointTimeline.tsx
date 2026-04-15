@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, memo } from 'react'
 import {
   ComposedChart,
   LineChart,
@@ -14,11 +14,11 @@ import {
 } from 'recharts'
 import type { BOCPDData, Changepoint } from '../types/bocpd'
 import { InfoTooltip } from './InfoTooltip'
+import { hoverStore } from '../hooks/hoverStore'
 
 interface Props {
   data: BOCPDData
   onFocusDateChange?: (date: string) => void
-  onHoverDateChange?: (date: string | null) => void
 }
 
 export const PALETTE = [
@@ -89,7 +89,7 @@ function RunLengthTooltip({
 const axisStyle = { fontSize: 10, fontFamily: "'JetBrains Mono', monospace", fill: '#6b849e' }
 const gridStyle = { stroke: '#1e2d45', strokeDasharray: '2 4' }
 
-export default function PriceChangepointTimeline({ data, onFocusDateChange, onHoverDateChange }: Props) {
+function PriceChangepointTimeline({ data, onFocusDateChange }: Props) {
   const { prices, short_run_prob, changepoints, regime_segments, run_length_map, metadata } = data
   const segCount = regime_segments.length
 
@@ -208,9 +208,9 @@ export default function PriceChangepointTimeline({ data, onFocusDateChange, onHo
             syncId="bocpd"
             onMouseMove={(state) => {
               const label = state?.activeLabel as string | undefined
-              if (label) onHoverDateChange?.(label)
+              if (label) hoverStore.set(label)
             }}
-            onMouseLeave={() => onHoverDateChange?.(null)}
+            onMouseLeave={() => hoverStore.set(null)}
           >
             <CartesianGrid {...gridStyle} vertical={false} />
             <XAxis
@@ -378,3 +378,4 @@ export default function PriceChangepointTimeline({ data, onFocusDateChange, onHo
     </div>
   )
 }
+export default memo(PriceChangepointTimeline)

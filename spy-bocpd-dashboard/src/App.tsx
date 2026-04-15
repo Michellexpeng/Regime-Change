@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
+import { hoverStore } from './hooks/hoverStore'
 import { useBOCPDData } from './hooks/useBOCPDData'
 import { useHMMData } from './hooks/useHMMData'
 import ControlBar from './components/ControlBar'
@@ -23,16 +24,14 @@ export default function App() {
     ? (hmmData.prices[hmmData.prices.length - 1]?.date ?? '')
     : (data.prices[data.prices.length - 1]?.date ?? '')
 
-  // hoverDate: live mouse position on chart (null when not hovering)
   // focusDate: brush end position (persists after mouse leaves)
-  const [hoverDate, setHoverDate] = useState<string | null>(null)
+  // hoverDate lives in hoverStore — sidebars subscribe directly, no App re-render on hover
   const [focusDate, setFocusDate] = useState<string>('')
 
-  // Sidebar shows hover > brush end > dataset end
-  const effectiveFocusDate = hoverDate ?? (focusDate || lastDate)
+  // Clear hover when switching methods so sidebar doesn't show stale date
+  useEffect(() => { hoverStore.set(null) }, [method])
 
   const handleFocusDate = useCallback((date: string) => setFocusDate(date), [])
-  const handleHoverDate = useCallback((date: string | null) => setHoverDate(date), [])
 
   return (
     <div className="flex flex-col h-screen bg-bg overflow-hidden">
@@ -87,13 +86,11 @@ export default function App() {
             <HMMPriceRegimeChart
               data={hmmData}
               onFocusDateChange={handleFocusDate}
-              onHoverDateChange={handleHoverDate}
             />
           ) : (
             <PriceChangepointTimeline
               data={data}
               onFocusDateChange={handleFocusDate}
-              onHoverDateChange={handleHoverDate}
             />
           )}
         </div>
@@ -101,12 +98,12 @@ export default function App() {
         {/* Right sidebar */}
         <div className="flex flex-col w-[300px] flex-shrink-0 border-l border-border">
           {method === 'hmm' && hmmData ? (
-            <HMMStateStatsPanel data={hmmData} focusDate={effectiveFocusDate} />
+            <HMMStateStatsPanel data={hmmData} focusDate={focusDate || lastDate} />
           ) : (
             <>
-              <KPIBar data={data} focusDate={effectiveFocusDate} isHovering={hoverDate !== null} />
+              <KPIBar data={data} focusDate={focusDate || lastDate} />
               <div className="flex-1 min-h-0">
-                <SegmentStatsPanel data={data} focusDate={effectiveFocusDate} />
+                <SegmentStatsPanel data={data} focusDate={focusDate || lastDate} />
               </div>
             </>
           )}
