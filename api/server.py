@@ -7,7 +7,6 @@ Endpoints:
   GET /health
 """
 
-import numpy as np
 from datetime import datetime
 from flask import Flask, request, jsonify
 from bocpd import run_bocpd

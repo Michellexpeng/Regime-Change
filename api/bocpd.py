@@ -2,7 +2,6 @@
 import numpy as np
 import scipy.stats as ss
 import yfinance as yf
-from datetime import datetime
 
 
 class StudentT:
