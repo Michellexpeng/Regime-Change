@@ -71,8 +71,11 @@ function HMMStateStatsPanel({ data, focusDate }: Props) {
 
   // --- Transition matrix remapped to bull/neutral/bear order ---
   const displayMatrix = useMemo(() => {
-    const stateForLabel = (label: RegimeLabel) =>
-      state_params.find(p => p.label === label)!.state
+    const stateForLabel = (label: RegimeLabel): number => {
+      const param = state_params.find(p => p.label === label)
+      if (!param) throw new Error(`Missing state param for label: ${label}`)
+      return param.state
+    }
     return LABEL_ORDER.map(fromLabel => {
       const fromIdx = stateForLabel(fromLabel)
       return LABEL_ORDER.map(toLabel => {

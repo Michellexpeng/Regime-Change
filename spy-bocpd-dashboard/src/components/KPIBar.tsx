@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import type { BOCPDData } from '../types/bocpd'
 import { InfoTooltip } from './InfoTooltip'
 import { useHoverDate } from '../hooks/hoverStore'
@@ -42,15 +43,18 @@ export default function KPIBar({ data, focusDate }: Props) {
   const effectiveDate = hoverDate ?? focusDate
   const { prices, short_run_prob, run_length_map, changepoints, regime_segments, metadata } = data
 
-  const focusIdx = (() => {
-    let idx = prices.length - 1
-    for (let i = 0; i < prices.length; i++) {
-      if (prices[i].date >= effectiveDate) { idx = i; break }
+  const focusIdx = useMemo(() => {
+    if (!prices.length) return -1
+    let lo = 0, hi = prices.length - 1, result = prices.length - 1
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1
+      if (prices[mid].date <= effectiveDate) { result = mid; lo = mid + 1 }
+      else hi = mid - 1
     }
-    return idx
-  })()
+    return result
+  }, [prices, effectiveDate])
 
-  const focusClose = prices[focusIdx]?.close ?? 0
+  const focusClose = focusIdx >= 0 ? (prices[focusIdx]?.close ?? 0) : 0
   const prevClose  = prices[focusIdx - 1]?.close ?? focusClose
   const dayChange  = focusClose - prevClose
   const dayPct     = prevClose ? dayChange / prevClose : 0

@@ -181,6 +181,13 @@ function HMMPriceRegimeChart({ data, onFocusDateChange }: Props) {
 
   const ticker = data.metadata.ticker ?? 'SPY'
 
+  const handleMouseMove = useCallback((state: { activeLabel?: string }) => {
+    const label = state?.activeLabel
+    if (label) hoverStore.set(label)
+  }, [])
+
+  const handleMouseLeave = useCallback(() => hoverStore.set(null), [])
+
   return (
     <div className="flex flex-col h-full bg-panel border-b border-border">
 
@@ -220,11 +227,8 @@ function HMMPriceRegimeChart({ data, onFocusDateChange }: Props) {
           <ComposedChart
             data={displayData}
             margin={{ top: 4, right: 12, bottom: 0, left: 8 }}
-            onMouseMove={(state) => {
-              const label = state?.activeLabel as string | undefined
-              if (label) hoverStore.set(label)
-            }}
-            onMouseLeave={() => hoverStore.set(null)}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
           >
             <CartesianGrid {...GRID_STYLE} vertical={false} />
             <XAxis
