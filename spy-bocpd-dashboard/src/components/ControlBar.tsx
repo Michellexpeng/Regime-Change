@@ -66,7 +66,7 @@ export default function ControlBar({ defaults, loading, onSubmit }: Props) {
     <div className="flex items-center gap-3 px-4 h-[44px] bg-card border-b border-border flex-shrink-0">
       {/* Brand */}
       <span className="text-[11px] uppercase tracking-[0.12em] text-t3 font-medium mr-1 whitespace-nowrap">
-        BOCPD Dashboard
+        Bayesian Regime Detector
       </span>
 
       <div className="flex gap-0.5 bg-bg border border-border rounded p-0.5" role="group" aria-label="Detection method">
