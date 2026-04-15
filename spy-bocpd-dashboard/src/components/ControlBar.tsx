@@ -7,6 +7,7 @@ export interface QueryParams {
   end: string
   lambda: number
   threshold: number
+  method: 'bocpd' | 'hmm'
 }
 
 interface Props {
@@ -28,6 +29,7 @@ export default function ControlBar({ defaults, loading, onSubmit }: Props) {
   const [end,       setEnd]       = useState(defaults.end)
   const [lambda,    setLambda]    = useState(String(defaults.lambda))
   const [threshold, setThreshold] = useState(String(defaults.threshold))
+  const [method,    setMethod]    = useState<'bocpd' | 'hmm'>(defaults.method ?? 'bocpd')
 
   // Lambda: text field, empty → use default
   const lambdaNum   = lambda === '' ? defaults.lambda : parseInt(lambda)
@@ -49,6 +51,7 @@ export default function ControlBar({ defaults, loading, onSubmit }: Props) {
       end,
       lambda:    lambdaNum,
       threshold: thresholdNum,
+      method,
     })
   }
 
@@ -65,6 +68,24 @@ export default function ControlBar({ defaults, loading, onSubmit }: Props) {
       <span className="text-[11px] uppercase tracking-[0.12em] text-t3 font-medium mr-1 whitespace-nowrap">
         BOCPD Dashboard
       </span>
+
+      <div className="flex gap-0.5 bg-bg border border-border rounded p-0.5">
+        {(['bocpd', 'hmm'] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setMethod(m)}
+            disabled={loading}
+            className={`px-2.5 py-0.5 text-[10px] font-mono rounded transition-colors ${
+              method === m
+                ? 'bg-blue text-white'
+                : 'text-t3 hover:text-t2'
+            }`}
+          >
+            {m.toUpperCase()}
+          </button>
+        ))}
+      </div>
 
       <div className="w-px h-4 bg-border" />
 
@@ -125,69 +146,73 @@ export default function ControlBar({ defaults, loading, onSubmit }: Props) {
           />
         </div>
 
-        <div className="w-px h-4 bg-border" />
+        {method === 'bocpd' && (
+          <>
+            <div className="w-px h-4 bg-border" />
 
-        {/* Lambda — number input + quick chips */}
-        <div className="flex items-center gap-1.5">
-          <label className="text-[10px] font-sans uppercase tracking-widest text-t3 whitespace-nowrap">λ</label>
-          <InfoTooltip
-            text="Expected number of trading days between changepoints. Sets the geometric prior hazard rate H = 1/λ. Larger λ → rarer changepoints → smoother segmentation. Default: 250 (~1 year)."
-            width={260}
-          />
-          {/* Quick-select chips */}
-          <div className="flex gap-0.5">
-            {QUICK_LAMBDAS.map(l => (
-              <button
-                key={l}
-                type="button"
-                onClick={() => setLambda(String(l))}
+            {/* Lambda — number input + quick chips */}
+            <div className="flex items-center gap-1.5">
+              <label className="text-[10px] font-sans uppercase tracking-widest text-t3 whitespace-nowrap">λ</label>
+              <InfoTooltip
+                text="Expected number of trading days between changepoints. Sets the geometric prior hazard rate H = 1/λ. Larger λ → rarer changepoints → smoother segmentation. Default: 250 (~1 year)."
+                width={260}
+              />
+              {/* Quick-select chips */}
+              <div className="flex gap-0.5">
+                {QUICK_LAMBDAS.map(l => (
+                  <button
+                    key={l}
+                    type="button"
+                    onClick={() => setLambda(String(l))}
+                    disabled={loading}
+                    className={`px-1.5 py-0.5 text-[10px] font-mono rounded border transition-colors ${
+                      lambdaNum === l
+                        ? 'bg-blue-dim border-blue text-blue'
+                        : 'bg-bg border-border text-t3 hover:border-t3 hover:text-t2'
+                    }`}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+              {/* Custom value input */}
+              <input
+                type="number"
+                value={lambda}
+                step="any"
+                placeholder={String(defaults.lambda)}
+                onChange={(e) => setLambda(e.target.value)}
+                className={`${inputBase} w-[56px] ${!lambdaValid ? invalidInput : ''}`}
                 disabled={loading}
-                className={`px-1.5 py-0.5 text-[10px] font-mono rounded border transition-colors ${
-                  lambdaNum === l
-                    ? 'bg-blue-dim border-blue text-blue'
-                    : 'bg-bg border-border text-t3 hover:border-t3 hover:text-t2'
-                }`}
-              >
-                {l}
-              </button>
-            ))}
-          </div>
-          {/* Custom value input */}
-          <input
-            type="number"
-            value={lambda}
-            step="any"
-            placeholder={String(defaults.lambda)}
-            onChange={(e) => setLambda(e.target.value)}
-            className={`${inputBase} w-[56px] ${!lambdaValid ? invalidInput : ''}`}
-            disabled={loading}
-          />
-        </div>
+              />
+            </div>
 
-        {/* Threshold — slider, bounded 0.50–0.95 */}
-        <div className="flex items-center gap-2">
-          <label className="text-[10px] font-sans uppercase tracking-widest text-t3 whitespace-nowrap">Thr</label>
-          <InfoTooltip
-            text="Detection threshold for the regime-change signal. A changepoint is declared when the probability that a new regime started within the last 10 days exceeds this value. Higher → fewer but more confident detections. Default: 0.8."
-            width={260}
-          />
-          <input
-            type="range"
-            min={THR_MIN}
-            max={THR_MAX}
-            step={THR_STEP}
-            value={thresholdNum}
-            onChange={(e) => setThrFromSlider(e.target.value)}
-            className="w-[80px]"
-            disabled={loading}
-          />
-          {/* Live value badge */}
-          <span className={`font-mono text-[11px] font-medium w-[30px] text-center tabular-nums ${
-            thresholdNum >= 0.9 ? 'text-green' : thresholdNum <= 0.6 ? 'text-amber' : 'text-blue'
-          }`}>
-            {thresholdNum.toFixed(2)}
-          </span>
-        </div>
+            {/* Threshold — slider, bounded 0.50–0.95 */}
+            <div className="flex items-center gap-2">
+              <label className="text-[10px] font-sans uppercase tracking-widest text-t3 whitespace-nowrap">Thr</label>
+              <InfoTooltip
+                text="Detection threshold for the regime-change signal. A changepoint is declared when the probability that a new regime started within the last 10 days exceeds this value. Higher → fewer but more confident detections. Default: 0.8."
+                width={260}
+              />
+              <input
+                type="range"
+                min={THR_MIN}
+                max={THR_MAX}
+                step={THR_STEP}
+                value={thresholdNum}
+                onChange={(e) => setThrFromSlider(e.target.value)}
+                className="w-[80px]"
+                disabled={loading}
+              />
+              {/* Live value badge */}
+              <span className={`font-mono text-[11px] font-medium w-[30px] text-center tabular-nums ${
+                thresholdNum >= 0.9 ? 'text-green' : thresholdNum <= 0.6 ? 'text-amber' : 'text-blue'
+              }`}>
+                {thresholdNum.toFixed(2)}
+              </span>
+            </div>
+          </>
+        )}
 
         {/* Apply */}
         <button
