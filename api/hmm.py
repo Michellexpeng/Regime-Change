@@ -5,9 +5,10 @@ from hmmlearn.hmm import GaussianHMM
 
 
 _N_STATES    = 3
-_N_ITER      = 300
+_N_ITER      = 200
 _RANDOM_SEED = 42
 _VOL_WINDOW  = 21   # rolling window for realized volatility feature
+_N_RESTARTS  = 5    # reduced from 10 to limit memory on free-tier servers
 
 
 def run_hmm(ticker: str, start: str, end: str, n_states: int = _N_STATES) -> dict:
@@ -38,7 +39,7 @@ def run_hmm(ticker: str, start: str, end: str, n_states: int = _N_STATES) -> dic
     # restarts and scoring by inter-state distance avoids this.
     best_model  = None
     best_score  = -np.inf
-    for seed in range(10):
+    for seed in range(_N_RESTARTS):
         m = GaussianHMM(
             n_components=n_states,
             covariance_type="full",
