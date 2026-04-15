@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import type { HMMData } from '../types/hmm'
+import staticData from '../data/hmm_data.json'
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8765'
 
@@ -10,14 +11,14 @@ export interface HMMFetchParams {
 }
 
 export interface UseHMMDataReturn {
-  data: HMMData | null
+  data: HMMData
   loading: boolean
   error: string | null
   fetch: (params: HMMFetchParams) => Promise<void>
 }
 
 export function useHMMData(): UseHMMDataReturn {
-  const [data,    setData]    = useState<HMMData | null>(null)
+  const [data,    setData]    = useState<HMMData>(staticData as HMMData)
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState<string | null>(null)
 
