@@ -8,6 +8,7 @@ Endpoints:
   GET /health
 """
 
+import re
 from datetime import datetime
 from flask import Flask, request, jsonify
 from bocpd import run_bocpd
@@ -31,13 +32,24 @@ def health():
 
 @app.route("/bocpd")
 def bocpd():
-    ticker    = request.args.get("ticker", "SPY").upper().strip()
-    start     = request.args.get("start",  "2016-01-01")
-    end       = request.args.get("end",    datetime.today().strftime("%Y-%m-%d"))
-    lambda_   = int(request.args.get("lambda",    250))
-    threshold = float(request.args.get("threshold", 0.8))
+    ticker = request.args.get("ticker", "SPY").upper().strip()
+    if not re.match(r'^[A-Z0-9.\-]{1,10}$', ticker):
+        return jsonify({"error": "Invalid ticker: must be 1–10 alphanumeric characters"}), 400
 
-    # Basic validation
+    start = request.args.get("start", "2016-01-01")
+    end   = request.args.get("end",   datetime.today().strftime("%Y-%m-%d"))
+
+    try:
+        lambda_ = int(request.args.get("lambda", 250))
+        if lambda_ <= 0:
+            return jsonify({"error": "lambda must be a positive integer"}), 400
+        threshold = float(request.args.get("threshold", 0.8))
+        if not (0.0 <= threshold <= 1.0):
+            return jsonify({"error": "threshold must be between 0 and 1"}), 400
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid parameter type for lambda or threshold"}), 400
+
+    # Date validation
     try:
         datetime.strptime(start, "%Y-%m-%d")
         datetime.strptime(end,   "%Y-%m-%d")
@@ -60,9 +72,13 @@ def bocpd():
 @app.route("/hmm")
 def hmm():
     ticker = request.args.get("ticker", "SPY").upper().strip()
-    start  = request.args.get("start",  "2016-01-01")
-    end    = request.args.get("end",    datetime.today().strftime("%Y-%m-%d"))
+    if not re.match(r'^[A-Z0-9.\-]{1,10}$', ticker):
+        return jsonify({"error": "Invalid ticker: must be 1–10 alphanumeric characters"}), 400
 
+    start = request.args.get("start", "2016-01-01")
+    end   = request.args.get("end",   datetime.today().strftime("%Y-%m-%d"))
+
+    # Date validation
     try:
         datetime.strptime(start, "%Y-%m-%d")
         datetime.strptime(end,   "%Y-%m-%d")
