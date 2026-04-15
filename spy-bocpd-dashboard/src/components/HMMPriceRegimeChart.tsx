@@ -127,8 +127,8 @@ function ConfTooltip({
 export default function HMMPriceRegimeChart({ data, onFocusDateChange, onHoverDateChange }: Props) {
   const merged = useMemo<MergedRow[]>(() => {
     return data.prices.map((p, i) => {
-      const seq   = data.state_sequence[i]
-      const probs = data.state_probs[i]
+      const seq   = data.state_sequence?.[i]
+      const probs = data.state_probs?.[i]
       const label = seq?.label as RegimeLabel | undefined
       const maxP  = Math.max(probs?.bull ?? 0, probs?.neutral ?? 0, probs?.bear ?? 0)
       return {
