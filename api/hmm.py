@@ -22,8 +22,14 @@ def run_hmm(ticker: str, start: str, end: str, n_states: int = _N_STATES) -> dic
     T            = len(log_returns)
 
     # ── 2D features: [log_return, rolling_vol_21] ─────────────────────────
-    roll_vol = log_returns.rolling(_VOL_WINDOW).std().bfill()
-    features = np.column_stack([log_returns.values, roll_vol.values])
+    roll_vol     = log_returns.rolling(_VOL_WINDOW).std().bfill()
+    features_raw = np.column_stack([log_returns.values, roll_vol.values])
+
+    # Standardize features for numerical stability (prevents singular covariance)
+    feat_mean = features_raw.mean(axis=0)
+    feat_std  = features_raw.std(axis=0)
+    feat_std[feat_std == 0] = 1.0          # guard against zero-variance columns
+    features  = (features_raw - feat_mean) / feat_std
 
     # ── Fit HMM ────────────────────────────────────────────────────────────
     model = GaussianHMM(
@@ -35,6 +41,7 @@ def run_hmm(ticker: str, start: str, end: str, n_states: int = _N_STATES) -> dic
     model.fit(features)
 
     # ── State alignment: sort by rolling_vol mean (col 1) ascending ───────
+    # Scaled means preserve ordering → use them to rank states
     # lowest vol = bull, highest vol = bear
     order     = np.argsort(model.means_[:, 1])
     LABEL_MAP = {int(order[0]): "bull", int(order[1]): "neutral", int(order[2]): "bear"}
@@ -80,7 +87,7 @@ def run_hmm(ticker: str, start: str, end: str, n_states: int = _N_STATES) -> dic
         seg      = log_returns.values[hidden_states == orig_state]
         mean_ann = float(np.mean(seg)) * 252      if len(seg) > 1 else 0.0
         std_ann  = float(np.std(seg)) * np.sqrt(252) if len(seg) > 1 else 0.0
-        vol_mean = float(model.means_[orig_state][1])   # mean of rolling_vol feature
+        vol_mean = float(np.mean(roll_vol.values[hidden_states == orig_state])) if (hidden_states == orig_state).any() else 0.0
         state_params.append({
             "state":       orig_state,
             "label":       label,
